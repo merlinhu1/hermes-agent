@@ -19,7 +19,7 @@ EXPECTED_GATEWAY_QUICK_ACTIONS = (
     "help",
     "model",
     "agents",
-    "profile",
+    "personality",
     "whoami",
     "insights",
     "new",
@@ -35,6 +35,7 @@ EXPECTED_GATEWAY_QUICK_ACTIONS = (
 def test_gateway_quick_actions_include_common_session_controls():
     assert GATEWAY_QUICK_ACTION_COMMANDS == EXPECTED_GATEWAY_QUICK_ACTIONS
     assert {"new", "retry", "undo", "stop", "compress", "fast", "yolo"}.issubset(GATEWAY_QUICK_ACTION_COMMANDS)
+    assert "personality" in GATEWAY_QUICK_ACTION_COMMANDS
 
 
 @pytest.mark.parametrize("command", GATEWAY_QUICK_ACTION_COMMANDS)
@@ -59,6 +60,6 @@ def test_gateway_quick_action_confirm_commands_are_visible_actions():
     assert GATEWAY_QUICK_ACTION_CONFIRM_COMMANDS.issubset(set(GATEWAY_QUICK_ACTION_COMMANDS))
 
 
-def test_gateway_quick_action_fast_dispatches_toggle_payload():
-    assert gateway_quick_action_command_text("fast") == "/fast toggle"
+def test_gateway_quick_action_fast_dispatches_bare_fast_payload():
+    assert gateway_quick_action_command_text("fast") == "/fast"
     assert gateway_quick_action_command_text("status") == "/status"

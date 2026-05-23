@@ -4647,7 +4647,7 @@ class HermesCLI:
         """Build the effective model/runtime config for a single user turn.
 
         Always uses the session's primary model/provider.  If the user has
-        toggled `/fast` on and the current model supports Priority
+        enabled `/fast` and the current model supports Priority
         Processing / Anthropic fast mode, attach `request_overrides` so the
         API call is marked accordingly.
         """
@@ -9485,7 +9485,7 @@ class HermesCLI:
             _cprint(f"  {_ACCENT}✓ Busy input mode set to '{arg}' (session only){_RST}")
 
     def _handle_fast_command(self, cmd: str):
-        """Handle /fast — toggle fast mode (OpenAI Priority Processing / Anthropic Fast Mode)."""
+        """Handle /fast — set fast mode (OpenAI Priority Processing / Anthropic Fast Mode)."""
         if not self._fast_command_available():
             _cprint("  (._.) /fast is only available for models that support fast mode (OpenAI Priority Processing or Anthropic Fast Mode).")
             return
@@ -9507,9 +9507,6 @@ class HermesCLI:
             return
 
         arg = parts[1].strip().lower()
-        if arg == "toggle":
-            arg = "normal" if self.service_tier == "priority" else "fast"
-
         if arg in {"fast", "on"}:
             self.service_tier = "priority"
             saved_value = "fast"

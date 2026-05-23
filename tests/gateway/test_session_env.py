@@ -72,17 +72,14 @@ def test_set_session_env_sets_contextvars(monkeypatch):
     runner._clear_session_env(tokens)
 
 
-def test_set_session_env_omits_message_id_for_legacy_helper(monkeypatch):
-    """_set_session_env should not crash if set_session_vars lacks message_id.
-
-    This protects partially-updated gateway installs where gateway/run.py was
-    refreshed before gateway/session_context.py.
-    """
+def test_set_session_env_forwards_message_id_directly(monkeypatch):
+    """_set_session_env should pass message_id without signature probing."""
+    import inspect
     import gateway.session_context as session_context_module
 
     calls = []
 
-    def legacy_set_session_vars(
+    def recording_set_session_vars(
         platform="",
         chat_id="",
         chat_name="",
@@ -90,6 +87,7 @@ def test_set_session_env_omits_message_id_for_legacy_helper(monkeypatch):
         user_id="",
         user_name="",
         session_key="",
+        message_id="",
     ):
         calls.append(
             {
@@ -100,11 +98,16 @@ def test_set_session_env_omits_message_id_for_legacy_helper(monkeypatch):
                 "user_id": user_id,
                 "user_name": user_name,
                 "session_key": session_key,
+                "message_id": message_id,
             }
         )
-        return ["legacy-token"]
+        return ["modern-token"]
 
-    monkeypatch.setattr(session_context_module, "set_session_vars", legacy_set_session_vars)
+    def fail_signature(*_args, **_kwargs):
+        raise AssertionError("_set_session_env should not inspect set_session_vars")
+
+    monkeypatch.setattr(inspect, "signature", fail_signature)
+    monkeypatch.setattr(session_context_module, "set_session_vars", recording_set_session_vars)
 
     runner = object.__new__(GatewayRunner)
     source = SessionSource(
@@ -126,7 +129,7 @@ def test_set_session_env_omits_message_id_for_legacy_helper(monkeypatch):
 
     tokens = runner._set_session_env(context)
 
-    assert tokens == ["legacy-token"]
+    assert tokens == ["modern-token"]
     assert calls == [
         {
             "platform": "discord",
@@ -136,6 +139,7 @@ def test_set_session_env_omits_message_id_for_legacy_helper(monkeypatch):
             "user_id": "42",
             "user_name": "merlin",
             "session_key": "discord:1506701337025581340",
+            "message_id": "1507019797173371041",
         }
     ]
 

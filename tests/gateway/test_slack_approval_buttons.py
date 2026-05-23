@@ -3,7 +3,6 @@
 import asyncio
 import os
 import sys
-import time
 from pathlib import Path
 from unittest.mock import AsyncMock, MagicMock, patch
 
@@ -46,7 +45,6 @@ _ensure_slack_mock()
 
 from gateway.platforms.slack import SlackAdapter
 from gateway.config import Platform, PlatformConfig
-from gateway.platforms.base import MessageType
 
 
 def _make_adapter():
@@ -610,122 +608,12 @@ class TestThreadEngagement:
 
 
 # ===========================================================================
-# Command palette — Block Kit buttons
+# Command palette de-scope
 # ===========================================================================
 
-class TestSlackCommandPalette:
-    """Regression tests for Slack palette callback dispatch and safety gates."""
+class TestSlackCommandPaletteDeScoped:
+    """Slack no longer exposes native command-palette quick-action buttons."""
 
-    @pytest.mark.asyncio
-    async def test_palette_button_dispatches_shared_command_event(self, monkeypatch):
-        monkeypatch.delenv("SLACK_ALLOWED_USERS", raising=False)
-        monkeypatch.delenv("SLACK_ALLOWED_CHANNELS", raising=False)
-        adapter = _make_adapter()
-        adapter.handle_message = AsyncMock()
-
-        body = {
-            "channel": {"id": "C1"},
-            "user": {"id": "U1", "name": "merlin"},
-            "message": {"ts": "123.456"},
-            "container": {"is_ephemeral": False},
-        }
-
-        await adapter._handle_palette_action(AsyncMock(), body, {"value": "usage"})
-
-        adapter.handle_message.assert_awaited_once()
-        event = adapter.handle_message.await_args.args[0]
-        assert event.text == "/usage"
-        assert event.message_type == MessageType.COMMAND
-        assert event.source.chat_id == "C1"
-        assert event.source.chat_type == "group"
-        # Non-ephemeral group palette messages should preserve the palette
-        # message as thread context instead of collapsing all clicks to channel root.
-        assert event.source.thread_id == "123.456"
-
-    @pytest.mark.asyncio
-    async def test_sensitive_palette_button_requires_confirmation(self, monkeypatch):
-        monkeypatch.delenv("SLACK_ALLOWED_USERS", raising=False)
-        monkeypatch.delenv("SLACK_ALLOWED_CHANNELS", raising=False)
-        adapter = _make_adapter()
-        adapter.handle_message = AsyncMock()
-        adapter._send_palette_confirmation = AsyncMock()
-        body = {
-            "channel": {"id": "C1"},
-            "user": {"id": "U1", "name": "merlin"},
-            "message": {"ts": "123.456"},
-        }
-
-        await adapter._handle_palette_action(AsyncMock(), body, {"value": "yolo"})
-
-        adapter._send_palette_confirmation.assert_awaited_once_with("C1", "U1", "yolo", body)
-        adapter.handle_message.assert_not_called()
-
-    @pytest.mark.asyncio
-    async def test_confirmed_sensitive_palette_button_sets_preconfirmed_flag(self, monkeypatch):
-        monkeypatch.delenv("SLACK_ALLOWED_USERS", raising=False)
-        monkeypatch.delenv("SLACK_ALLOWED_CHANNELS", raising=False)
-        adapter = _make_adapter()
-        adapter.handle_message = AsyncMock()
-        adapter._palette_confirmations["nonce1"] = {
-            "command": "new",
-            "channel_id": "C1",
-            "user_id": "U1",
-            "thread_ts": "123.456",
-            "message_ts": "123.456",
-            "ts": time.monotonic(),
-        }
-        body = {
-            "channel": {"id": "C1"},
-            "user": {"id": "U1", "name": "merlin"},
-            "message": {"ts": "999.000"},
-            "container": {"is_ephemeral": True},
-        }
-
-        await adapter._handle_palette_action(AsyncMock(), body, {"value": "confirm:new:nonce1"})
-
-        event = adapter.handle_message.await_args.args[0]
-        assert event.text == "/new"
-        assert event.source.thread_id == "123.456"
-        assert getattr(event, "preconfirmed_destructive", False) is True
-
-    @pytest.mark.asyncio
-    async def test_stateless_or_expired_palette_confirmation_is_rejected(self, monkeypatch):
-        monkeypatch.delenv("SLACK_ALLOWED_USERS", raising=False)
-        monkeypatch.delenv("SLACK_ALLOWED_CHANNELS", raising=False)
-        adapter = _make_adapter()
-        adapter.handle_message = AsyncMock()
-        body = {
-            "channel": {"id": "C1"},
-            "user": {"id": "U1", "name": "merlin"},
-            "message": {"ts": "999.000"},
-            "container": {"is_ephemeral": True},
-        }
-
-        await adapter._handle_palette_action(AsyncMock(), body, {"value": "confirm:new"})
-        adapter.handle_message.assert_not_called()
-
-        adapter._palette_confirmations["expired"] = {
-            "command": "new",
-            "channel_id": "C1",
-            "user_id": "U1",
-            "thread_ts": "123.456",
-            "message_ts": "123.456",
-            "ts": time.monotonic() - adapter._PALETTE_CONFIRM_TTL - 1,
-        }
-        await adapter._handle_palette_action(AsyncMock(), body, {"value": "confirm:new:expired"})
-        adapter.handle_message.assert_not_called()
-
-    @pytest.mark.asyncio
-    async def test_palette_button_respects_allowed_channel_gate(self, monkeypatch):
-        monkeypatch.delenv("SLACK_ALLOWED_USERS", raising=False)
-        monkeypatch.setenv("SLACK_ALLOWED_CHANNELS", "C_ALLOWED")
-        adapter = _make_adapter()
-        adapter.handle_message = AsyncMock()
-
-        await adapter._handle_palette_action(
-            AsyncMock(),
-            {"channel": {"id": "C1"}, "user": {"id": "U1"}, "message": {"ts": "123.456"}},
-            {"value": "usage"},
-        )
-
-        adapter.handle_message.assert_not_called()
+    def test_slack_palette_runtime_is_de_scoped(self):
+        assert not hasattr(SlackAdapter, "send_command_palette")
+        assert not hasattr(SlackAdapter, "_handle_palette_action")

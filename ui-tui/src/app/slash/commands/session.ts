@@ -412,14 +412,14 @@ export const sessionCommands: SlashCommand[] = [
   },
 
   {
-    help: 'toggle fast mode [normal|fast|status|on|off|toggle]',
+    help: 'set fast mode [normal|fast|status|on|off]',
     name: 'fast',
     run: (arg, ctx) => {
       const mode = arg.trim().toLowerCase()
-      const valid = new Set(['', 'status', 'normal', 'fast', 'on', 'off', 'toggle'])
+      const valid = new Set(['', 'status', 'normal', 'fast', 'on', 'off'])
 
       if (!valid.has(mode)) {
-        return ctx.transcript.sys('usage: /fast [normal|fast|status|on|off|toggle]')
+        return ctx.transcript.sys('usage: /fast [normal|fast|status|on|off]')
       }
 
       if (!mode || mode === 'status') {

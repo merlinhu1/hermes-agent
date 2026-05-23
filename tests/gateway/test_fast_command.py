@@ -11,7 +11,7 @@ import yaml
 
 import gateway.run as gateway_run
 from gateway.config import Platform
-from gateway.platforms.base import MessageEvent
+from gateway.platforms.base import MessageEvent, SendResult
 from gateway.session import SessionSource
 
 
@@ -139,23 +139,7 @@ async def test_handle_fast_command_persists_config(monkeypatch, tmp_path):
 
 
 @pytest.mark.asyncio
-async def test_handle_fast_command_toggle_enables_fast_when_normal(monkeypatch, tmp_path):
-    runner = _make_runner()
-
-    monkeypatch.setattr(gateway_run, "_hermes_home", tmp_path)
-    monkeypatch.setattr(gateway_run, "_load_gateway_config", lambda: {})
-    monkeypatch.setattr(gateway_run, "_resolve_gateway_model", lambda config=None: "gpt-5.4")
-
-    response = await runner._handle_fast_command(_make_event("/fast toggle"))
-
-    assert "FAST" in response
-    assert runner._service_tier == "priority"
-    saved = yaml.safe_load((tmp_path / "config.yaml").read_text(encoding="utf-8"))
-    assert saved["agent"]["service_tier"] == "fast"
-
-
-@pytest.mark.asyncio
-async def test_handle_fast_command_toggle_disables_fast_when_already_fast(monkeypatch, tmp_path):
+async def test_handle_fast_command_normal_disables_fast_when_already_fast(monkeypatch, tmp_path):
     runner = _make_runner()
     runner._service_tier = "priority"
 
@@ -164,13 +148,44 @@ async def test_handle_fast_command_toggle_disables_fast_when_already_fast(monkey
     monkeypatch.setattr(gateway_run, "_load_gateway_config", lambda: {"agent": {"service_tier": "fast"}})
     monkeypatch.setattr(gateway_run, "_resolve_gateway_model", lambda config=None: "gpt-5.4")
 
-    response = await runner._handle_fast_command(_make_event("/fast toggle"))
+    response = await runner._handle_fast_command(_make_event("/fast normal"))
 
     assert "NORMAL" in response
     assert runner._service_tier is None
     saved = yaml.safe_load((tmp_path / "config.yaml").read_text(encoding="utf-8"))
     assert saved["agent"]["service_tier"] == "normal"
 
+@pytest.mark.asyncio
+async def test_handle_fast_command_no_args_sends_picker(monkeypatch, tmp_path):
+    runner = _make_runner()
+    picker = AsyncMock(return_value=SendResult(success=True))
+
+    class PickerAdapter:
+        send_fast_picker = picker
+
+    runner.adapters[Platform.TELEGRAM] = PickerAdapter()
+
+    monkeypatch.setattr(gateway_run, "_hermes_home", tmp_path)
+    monkeypatch.setattr(gateway_run, "_load_gateway_config", lambda: {})
+    monkeypatch.setattr(gateway_run, "_resolve_gateway_model", lambda config=None: "gpt-5.4")
+
+    response = await runner._handle_fast_command(_make_event("/fast"))
+
+    assert response is None
+    assert runner._service_tier is None
+    assert not (tmp_path / "config.yaml").exists()
+    picker.assert_awaited_once()
+    _args, kwargs = picker.await_args
+    assert kwargs["chat_id"] == "12345"
+    assert kwargs["current_mode"] == "normal"
+    assert kwargs["session_key"] == "agent:main:telegram:dm:12345"
+
+    result = await kwargs["on_speed_selected"]("fast")
+
+    assert "FAST" in result
+    assert runner._service_tier == "priority"
+    saved = yaml.safe_load((tmp_path / "config.yaml").read_text(encoding="utf-8"))
+    assert saved["agent"]["service_tier"] == "fast"
 
 @pytest.mark.asyncio
 async def test_run_agent_passes_priority_processing_to_gateway_agent(monkeypatch, tmp_path):

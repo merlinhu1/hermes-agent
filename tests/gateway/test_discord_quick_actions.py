@@ -24,7 +24,7 @@ EXPECTED_V1_COMMANDS = {
     "help",
     "model",
     "agents",
-    "profile",
+    "personality",
     "whoami",
     "insights",
     "new",
@@ -49,7 +49,7 @@ def test_discord_quick_actions_order_is_stable_for_v1_layout():
         "help",
         "model",
         "agents",
-        "profile",
+        "personality",
         "whoami",
         "insights",
         "new",
@@ -91,7 +91,7 @@ def test_discord_quick_actions_confirm_destructive_actions():
         ("help", "Help"),
         ("model", "Model"),
         ("agents", "Agents"),
-        ("profile", "Profile"),
+        ("personality", "Personality"),
         ("whoami", "Who Am I"),
         ("insights", "Insights"),
         ("new", "New"),
@@ -111,7 +111,7 @@ def test_discord_quick_action_labels(command, label):
 def test_discord_quick_action_rows_match_v1_layout():
     rows = {command: _quick_action_row(command) for command in DISCORD_QUICK_ACTION_COMMANDS}
     assert [cmd for cmd, row in rows.items() if row == 0] == ["status", "usage", "help"]
-    assert [cmd for cmd, row in rows.items() if row == 1] == ["model", "agents", "profile"]
+    assert [cmd for cmd, row in rows.items() if row == 1] == ["model", "agents", "personality"]
     assert [cmd for cmd, row in rows.items() if row == 2] == ["whoami", "insights", "new"]
     assert [cmd for cmd, row in rows.items() if row == 3] == ["retry", "undo", "stop"]
     assert [cmd for cmd, row in rows.items() if row == 4] == ["compress", "fast", "yolo"]
@@ -131,6 +131,7 @@ def test_discord_quick_action_button_styles_use_semantic_groups():
 
     assert DISCORD_QUICK_ACTION_PRIMARY_COMMANDS == frozenset({
         "model",
+        "personality",
         "retry",
         "compress",
         "fast",
@@ -148,7 +149,7 @@ def test_discord_quick_action_button_styles_use_semantic_groups():
         - set(DISCORD_QUICK_ACTION_CONFIRM_COMMANDS)
         - set(DISCORD_QUICK_ACTION_PRIMARY_COMMANDS)
     )
-    assert neutral_commands == {"status", "usage", "help", "agents", "profile", "whoami", "insights"}
+    assert neutral_commands == {"status", "usage", "help", "agents", "whoami", "insights"}
     for command in neutral_commands:
         assert buttons[command].style == discord_platform.discord.ButtonStyle.secondary
 
@@ -190,7 +191,7 @@ async def test_quick_action_button_dispatches_direct_commands_without_deleting_p
 
 
 @pytest.mark.asyncio
-async def test_quick_action_fast_button_dispatches_toggle_not_status():
+async def test_quick_action_fast_button_dispatches_bare_fast_command():
     if not hasattr(discord_platform, "CommandQuickActionsView"):
         pytest.skip("discord.py UI classes are not available")
 
@@ -206,7 +207,7 @@ async def test_quick_action_fast_button_dispatches_toggle_not_status():
 
     adapter._run_simple_slash.assert_awaited_once_with(
         interaction,
-        "/fast toggle",
+        "/fast",
         cleanup_response=False,
     )
 

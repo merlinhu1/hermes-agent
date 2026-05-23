@@ -44,6 +44,24 @@ from hermes_cli.commands import (
 DISCORD_QUICK_ACTION_COMMANDS: tuple[str, ...] = GATEWAY_QUICK_ACTION_COMMANDS
 DISCORD_QUICK_ACTION_CONFIRM_COMMANDS: frozenset[str] = GATEWAY_QUICK_ACTION_CONFIRM_COMMANDS
 
+# Discord palette colors follow one semantic rule set:
+# - danger/red: confirmation-gated actions that can disrupt the session/runtime
+# - primary/blurple: non-destructive actions that actively change or re-run work
+# - secondary/grey: read-only informational actions
+DISCORD_QUICK_ACTION_PRIMARY_COMMANDS: frozenset[str] = frozenset({
+    "model",
+    "retry",
+    "compress",
+    "fast",
+})
+
+DISCORD_QUICK_ACTION_CONFIRM_PROMPTS: dict[str, str] = {
+    "new": "Start a fresh Hermes session for this Discord thread?",
+    "undo": "Undo the last user/assistant exchange in this Discord thread?",
+    "stop": "Stop all running background processes for this Hermes instance?",
+    "yolo": "Enable YOLO mode for this session and skip dangerous-command approvals?",
+}
+
 
 def _quick_action_label(command_name: str) -> str:
     """Return the Discord button label for a V1 quick action."""
@@ -5049,10 +5067,10 @@ def _define_discord_view_classes() -> None:
     global CommandQuickActionButton, CommandQuickActionsView, QuickActionConfirmView
 
     def _quick_action_style(command_name: str):
-        if command_name == "yolo":
+        if command_name in DISCORD_QUICK_ACTION_CONFIRM_COMMANDS:
             return discord.ButtonStyle.red
-        if command_name in {"new", "retry"}:
-            return discord.ButtonStyle.green
+        if command_name in DISCORD_QUICK_ACTION_PRIMARY_COMMANDS:
+            return discord.ButtonStyle.primary
         return discord.ButtonStyle.secondary
 
     class QuickActionConfirmView(discord.ui.View):
@@ -5140,10 +5158,9 @@ def _define_discord_view_classes() -> None:
                 return
 
             if self.command_name in DISCORD_QUICK_ACTION_CONFIRM_COMMANDS:
-                prompt = (
-                    "Start a fresh Hermes session for this Discord thread?"
-                    if self.command_name == "new"
-                    else "Enable YOLO mode for this session and skip dangerous-command approvals?"
+                prompt = DISCORD_QUICK_ACTION_CONFIRM_PROMPTS.get(
+                    self.command_name,
+                    f"Run /{self.command_name}?",
                 )
                 await interaction.response.send_message(
                     prompt,

@@ -10,6 +10,8 @@ import gateway.platforms.discord as discord_platform
 from gateway.platforms.discord import (
     DISCORD_QUICK_ACTION_COMMANDS,
     DISCORD_QUICK_ACTION_CONFIRM_COMMANDS,
+    DISCORD_QUICK_ACTION_CONFIRM_PROMPTS,
+    DISCORD_QUICK_ACTION_PRIMARY_COMMANDS,
     _quick_action_label,
     _quick_action_row,
 )
@@ -117,6 +119,47 @@ def test_discord_quick_action_rows_match_v1_layout():
 
 def test_discord_quick_action_rows_stay_within_discord_v1_limit():
     assert max(_quick_action_row(command) for command in DISCORD_QUICK_ACTION_COMMANDS) <= 4
+
+
+def test_discord_quick_action_button_styles_use_semantic_groups():
+    if not hasattr(discord_platform, "CommandQuickActionsView"):
+        pytest.skip("discord.py UI classes are not available")
+
+    adapter = discord_platform.DiscordAdapter(PlatformConfig(enabled=True, token="***"))
+    view = discord_platform.CommandQuickActionsView(adapter)
+    buttons = {child.command_name: child for child in view.children}
+
+    assert DISCORD_QUICK_ACTION_PRIMARY_COMMANDS == frozenset({
+        "model",
+        "retry",
+        "compress",
+        "fast",
+    })
+    assert DISCORD_QUICK_ACTION_CONFIRM_COMMANDS == frozenset({"new", "undo", "stop", "yolo"})
+
+    for command in DISCORD_QUICK_ACTION_CONFIRM_COMMANDS:
+        assert buttons[command].style == discord_platform.discord.ButtonStyle.red
+
+    for command in DISCORD_QUICK_ACTION_PRIMARY_COMMANDS:
+        assert buttons[command].style == discord_platform.discord.ButtonStyle.primary
+
+    neutral_commands = (
+        set(DISCORD_QUICK_ACTION_COMMANDS)
+        - set(DISCORD_QUICK_ACTION_CONFIRM_COMMANDS)
+        - set(DISCORD_QUICK_ACTION_PRIMARY_COMMANDS)
+    )
+    assert neutral_commands == {"status", "usage", "help", "agents", "profile", "whoami", "insights"}
+    for command in neutral_commands:
+        assert buttons[command].style == discord_platform.discord.ButtonStyle.secondary
+
+
+def test_discord_quick_action_confirmation_prompts_match_command_semantics():
+    assert DISCORD_QUICK_ACTION_CONFIRM_PROMPTS == {
+        "new": "Start a fresh Hermes session for this Discord thread?",
+        "undo": "Undo the last user/assistant exchange in this Discord thread?",
+        "stop": "Stop all running background processes for this Hermes instance?",
+        "yolo": "Enable YOLO mode for this session and skip dangerous-command approvals?",
+    }
 
 
 def test_discord_palette_slash_command_does_not_expose_page_arg():

@@ -29,10 +29,6 @@ EXPECTED_V1_COMMANDS = {
     "insights",
     "new",
     "retry",
-    "undo",
-    "stop",
-    "compress",
-    "fast",
     "yolo",
 }
 
@@ -54,10 +50,6 @@ def test_discord_quick_actions_order_is_stable_for_v1_layout():
         "insights",
         "new",
         "retry",
-        "undo",
-        "stop",
-        "compress",
-        "fast",
         "yolo",
     )
 
@@ -75,12 +67,18 @@ def test_discord_quick_actions_excludes_arg_and_risky_commands_not_in_palette():
         "update",
         "approve",
         "deny",
+        # Keep heavyweight, ambiguous, or advanced session/config toggles out
+        # of the fixed Discord palette. They remain available as slash commands.
+        "undo",
+        "stop",
+        "compress",
+        "fast",
     }
     assert excluded.isdisjoint(DISCORD_QUICK_ACTION_COMMANDS)
 
 
 def test_discord_quick_actions_confirm_destructive_actions():
-    assert DISCORD_QUICK_ACTION_CONFIRM_COMMANDS == frozenset({"new", "undo", "stop", "yolo"})
+    assert DISCORD_QUICK_ACTION_CONFIRM_COMMANDS == frozenset({"new", "yolo"})
 
 
 @pytest.mark.parametrize(
@@ -96,10 +94,6 @@ def test_discord_quick_actions_confirm_destructive_actions():
         ("insights", "Insights"),
         ("new", "New"),
         ("retry", "Retry"),
-        ("undo", "Undo"),
-        ("stop", "Stop"),
-        ("compress", "Compress"),
-        ("fast", "Fast"),
         ("yolo", "YOLO"),
     ],
 )
@@ -113,8 +107,7 @@ def test_discord_quick_action_rows_match_v1_layout():
     assert [cmd for cmd, row in rows.items() if row == 0] == ["status", "usage", "help"]
     assert [cmd for cmd, row in rows.items() if row == 1] == ["model", "agents", "profile"]
     assert [cmd for cmd, row in rows.items() if row == 2] == ["whoami", "insights", "new"]
-    assert [cmd for cmd, row in rows.items() if row == 3] == ["retry", "undo", "stop"]
-    assert [cmd for cmd, row in rows.items() if row == 4] == ["compress", "fast", "yolo"]
+    assert [cmd for cmd, row in rows.items() if row == 3] == ["retry", "yolo"]
 
 
 def test_discord_quick_action_rows_stay_within_discord_v1_limit():
@@ -132,10 +125,8 @@ def test_discord_quick_action_button_styles_use_semantic_groups():
     assert DISCORD_QUICK_ACTION_PRIMARY_COMMANDS == frozenset({
         "model",
         "retry",
-        "compress",
-        "fast",
     })
-    assert DISCORD_QUICK_ACTION_CONFIRM_COMMANDS == frozenset({"new", "undo", "stop", "yolo"})
+    assert DISCORD_QUICK_ACTION_CONFIRM_COMMANDS == frozenset({"new", "yolo"})
 
     for command in DISCORD_QUICK_ACTION_CONFIRM_COMMANDS:
         assert buttons[command].style == discord_platform.discord.ButtonStyle.red
@@ -156,8 +147,6 @@ def test_discord_quick_action_button_styles_use_semantic_groups():
 def test_discord_quick_action_confirmation_prompts_match_command_semantics():
     assert DISCORD_QUICK_ACTION_CONFIRM_PROMPTS == {
         "new": "Start a fresh Hermes session for this Discord thread?",
-        "undo": "Undo the last user/assistant exchange in this Discord thread?",
-        "stop": "Stop all running background processes for this Hermes instance?",
         "yolo": "Enable YOLO mode for this session and skip dangerous-command approvals?",
     }
 

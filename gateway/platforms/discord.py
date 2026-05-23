@@ -51,14 +51,10 @@ DISCORD_QUICK_ACTION_CONFIRM_COMMANDS: frozenset[str] = GATEWAY_QUICK_ACTION_CON
 DISCORD_QUICK_ACTION_PRIMARY_COMMANDS: frozenset[str] = frozenset({
     "model",
     "retry",
-    "compress",
-    "fast",
 })
 
 DISCORD_QUICK_ACTION_CONFIRM_PROMPTS: dict[str, str] = {
     "new": "Start a fresh Hermes session for this Discord thread?",
-    "undo": "Undo the last user/assistant exchange in this Discord thread?",
-    "stop": "Stop all running background processes for this Hermes instance?",
     "yolo": "Enable YOLO mode for this session and skip dangerous-command approvals?",
 }
 

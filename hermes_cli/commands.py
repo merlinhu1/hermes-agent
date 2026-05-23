@@ -238,14 +238,10 @@ GATEWAY_QUICK_ACTION_COMMANDS: tuple[str, ...] = (
     "insights",
     "new",
     "retry",
-    "undo",
-    "stop",
-    "compress",
-    "fast",
     "yolo",
 )
 
-GATEWAY_QUICK_ACTION_CONFIRM_COMMANDS: frozenset[str] = frozenset({"new", "undo", "stop", "yolo"})
+GATEWAY_QUICK_ACTION_CONFIRM_COMMANDS: frozenset[str] = frozenset({"new", "yolo"})
 
 GATEWAY_QUICK_ACTION_LABELS: dict[str, str] = {
     "status": "Status",
@@ -258,10 +254,6 @@ GATEWAY_QUICK_ACTION_LABELS: dict[str, str] = {
     "insights": "Insights",
     "new": "New",
     "retry": "Retry",
-    "undo": "Undo",
-    "stop": "Stop",
-    "compress": "Compress",
-    "fast": "Fast",
     "yolo": "YOLO",
 }
 

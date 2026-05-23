@@ -23,17 +23,13 @@ EXPECTED_GATEWAY_QUICK_ACTIONS = (
     "insights",
     "new",
     "retry",
-    "undo",
-    "stop",
-    "compress",
-    "fast",
     "yolo",
 )
 
 
 def test_gateway_quick_actions_include_common_session_controls():
     assert GATEWAY_QUICK_ACTION_COMMANDS == EXPECTED_GATEWAY_QUICK_ACTIONS
-    assert {"stop", "undo", "fast", "compress"}.issubset(GATEWAY_QUICK_ACTION_COMMANDS)
+    assert {"new", "retry", "yolo"}.issubset(GATEWAY_QUICK_ACTION_COMMANDS)
 
 
 @pytest.mark.parametrize("command", GATEWAY_QUICK_ACTION_COMMANDS)
@@ -51,7 +47,7 @@ def test_gateway_quick_actions_have_short_labels(command: str):
 
 
 def test_gateway_quick_actions_confirm_destructive_commands():
-    assert GATEWAY_QUICK_ACTION_CONFIRM_COMMANDS == frozenset({"new", "undo", "stop", "yolo"})
+    assert GATEWAY_QUICK_ACTION_CONFIRM_COMMANDS == frozenset({"new", "yolo"})
 
 
 def test_gateway_quick_action_confirm_commands_are_visible_actions():

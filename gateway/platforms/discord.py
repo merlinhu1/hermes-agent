@@ -38,6 +38,7 @@ _DISCORD_COMMAND_SYNC_MAX_RATE_LIMIT_SLEEP_SECONDS = 30.0
 from hermes_cli.commands import (
     GATEWAY_QUICK_ACTION_COMMANDS,
     GATEWAY_QUICK_ACTION_CONFIRM_COMMANDS,
+    gateway_quick_action_command_text,
     gateway_quick_action_label,
 )
 
@@ -51,10 +52,14 @@ DISCORD_QUICK_ACTION_CONFIRM_COMMANDS: frozenset[str] = GATEWAY_QUICK_ACTION_CON
 DISCORD_QUICK_ACTION_PRIMARY_COMMANDS: frozenset[str] = frozenset({
     "model",
     "retry",
+    "compress",
+    "fast",
 })
 
 DISCORD_QUICK_ACTION_CONFIRM_PROMPTS: dict[str, str] = {
     "new": "Start a fresh Hermes session for this Discord thread?",
+    "undo": "Undo the last user/assistant exchange in this Discord thread?",
+    "stop": "Stop the active Hermes response in this Discord thread?",
     "yolo": "Enable YOLO mode for this session and skip dangerous-command approvals?",
 }
 
@@ -5107,7 +5112,7 @@ def _define_discord_view_classes() -> None:
                 return
             await self.platform._run_simple_slash(
                 interaction,
-                f"/{self.command_name}",
+                gateway_quick_action_command_text(self.command_name),
                 preconfirmed_destructive=True,
             )
 
@@ -5167,7 +5172,7 @@ def _define_discord_view_classes() -> None:
 
             await platform._run_simple_slash(
                 interaction,
-                f"/{self.command_name}",
+                gateway_quick_action_command_text(self.command_name),
                 cleanup_response=False,
             )
 

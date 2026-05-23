@@ -144,8 +144,8 @@ COMMAND_REGISTRY: list[CommandDef] = [
                args_hint="[level|show|hide]",
                subcommands=("none", "minimal", "low", "medium", "high", "xhigh", "show", "hide", "on", "off")),
     CommandDef("fast", "Toggle fast mode — OpenAI Priority Processing / Anthropic Fast Mode (Normal/Fast)", "Configuration",
-               args_hint="[normal|fast|status]",
-               subcommands=("normal", "fast", "status", "on", "off")),
+               args_hint="[normal|fast|status|toggle]",
+               subcommands=("normal", "fast", "status", "toggle", "on", "off")),
     CommandDef("skin", "Show or change the display skin/theme", "Configuration",
                cli_only=True, args_hint="[name]"),
     CommandDef("indicator", "Pick the TUI busy-indicator style", "Configuration",
@@ -238,10 +238,14 @@ GATEWAY_QUICK_ACTION_COMMANDS: tuple[str, ...] = (
     "insights",
     "new",
     "retry",
+    "undo",
+    "stop",
+    "compress",
+    "fast",
     "yolo",
 )
 
-GATEWAY_QUICK_ACTION_CONFIRM_COMMANDS: frozenset[str] = frozenset({"new", "yolo"})
+GATEWAY_QUICK_ACTION_CONFIRM_COMMANDS: frozenset[str] = frozenset({"new", "undo", "stop", "yolo"})
 
 GATEWAY_QUICK_ACTION_LABELS: dict[str, str] = {
     "status": "Status",
@@ -254,13 +258,28 @@ GATEWAY_QUICK_ACTION_LABELS: dict[str, str] = {
     "insights": "Insights",
     "new": "New",
     "retry": "Retry",
+    "undo": "Undo",
+    "stop": "Stop",
+    "compress": "Compress",
+    "fast": "Fast",
     "yolo": "YOLO",
+}
+
+GATEWAY_QUICK_ACTION_COMMAND_TEXTS: dict[str, str] = {
+    # Bare /fast is status by design; palette Fast is a one-click mode toggle.
+    "fast": "/fast toggle",
 }
 
 
 def gateway_quick_action_label(command: str) -> str:
     """Return the display label for a command-palette quick action."""
     return GATEWAY_QUICK_ACTION_LABELS.get(command, command.replace("-", " ").title())
+
+
+def gateway_quick_action_command_text(command: str) -> str:
+    """Return the slash text dispatched when a quick-action is selected."""
+    normalized = command.lower().lstrip("/").strip()
+    return GATEWAY_QUICK_ACTION_COMMAND_TEXTS.get(normalized, f"/{normalized}")
 
 
 # ---------------------------------------------------------------------------

@@ -2353,7 +2353,7 @@ class SlackAdapter(BasePlatformAdapter):
         prompts = {
             "new": "Start a fresh Hermes session for this Slack context?",
             "undo": "Undo the last user/assistant exchange in this Slack context?",
-            "stop": "Stop all running background processes for this Hermes instance?",
+            "stop": "Stop the active Hermes response in this Slack context?",
             "yolo": "Enable YOLO mode for this session and skip dangerous-command approvals?",
         }
         prompt = prompts.get(command, f"Run /{command}?")
@@ -2426,6 +2426,7 @@ class SlackAdapter(BasePlatformAdapter):
         from hermes_cli.commands import (
             GATEWAY_QUICK_ACTION_COMMANDS,
             GATEWAY_QUICK_ACTION_CONFIRM_COMMANDS,
+            gateway_quick_action_command_text,
             resolve_command,
         )
         if command not in GATEWAY_QUICK_ACTION_COMMANDS or resolve_command(command) is None:
@@ -2482,7 +2483,7 @@ class SlackAdapter(BasePlatformAdapter):
             thread_id=thread_ts,
         )
         event = MessageEvent(
-            text=f"/{command}",
+            text=gateway_quick_action_command_text(command),
             message_type=MessageType.COMMAND,
             source=source,
             raw_message=body,

@@ -9266,6 +9266,8 @@ class HermesCLI:
             return
 
         arg = parts[1].strip().lower()
+        if arg == "toggle":
+            arg = "normal" if self.service_tier == "priority" else "fast"
 
         if arg in {"fast", "on"}:
             self.service_tier = "priority"

@@ -11712,6 +11712,9 @@ class GatewayRunner:
             status = t("gateway.fast.status_fast") if self._service_tier == "priority" else t("gateway.fast.status_normal")
             return t("gateway.fast.status", mode=status)
 
+        if args == "toggle":
+            args = "normal" if self._service_tier == "priority" else "fast"
+
         if args in {"fast", "on"}:
             self._service_tier = "priority"
             saved_value = "fast"

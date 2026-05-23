@@ -139,6 +139,40 @@ async def test_handle_fast_command_persists_config(monkeypatch, tmp_path):
 
 
 @pytest.mark.asyncio
+async def test_handle_fast_command_toggle_enables_fast_when_normal(monkeypatch, tmp_path):
+    runner = _make_runner()
+
+    monkeypatch.setattr(gateway_run, "_hermes_home", tmp_path)
+    monkeypatch.setattr(gateway_run, "_load_gateway_config", lambda: {})
+    monkeypatch.setattr(gateway_run, "_resolve_gateway_model", lambda config=None: "gpt-5.4")
+
+    response = await runner._handle_fast_command(_make_event("/fast toggle"))
+
+    assert "FAST" in response
+    assert runner._service_tier == "priority"
+    saved = yaml.safe_load((tmp_path / "config.yaml").read_text(encoding="utf-8"))
+    assert saved["agent"]["service_tier"] == "fast"
+
+
+@pytest.mark.asyncio
+async def test_handle_fast_command_toggle_disables_fast_when_already_fast(monkeypatch, tmp_path):
+    runner = _make_runner()
+    runner._service_tier = "priority"
+
+    (tmp_path / "config.yaml").write_text("agent:\n  service_tier: fast\n", encoding="utf-8")
+    monkeypatch.setattr(gateway_run, "_hermes_home", tmp_path)
+    monkeypatch.setattr(gateway_run, "_load_gateway_config", lambda: {"agent": {"service_tier": "fast"}})
+    monkeypatch.setattr(gateway_run, "_resolve_gateway_model", lambda config=None: "gpt-5.4")
+
+    response = await runner._handle_fast_command(_make_event("/fast toggle"))
+
+    assert "NORMAL" in response
+    assert runner._service_tier is None
+    saved = yaml.safe_load((tmp_path / "config.yaml").read_text(encoding="utf-8"))
+    assert saved["agent"]["service_tier"] == "normal"
+
+
+@pytest.mark.asyncio
 async def test_run_agent_passes_priority_processing_to_gateway_agent(monkeypatch, tmp_path):
     _install_fake_agent(monkeypatch)
     runner = _make_runner()

@@ -119,6 +119,11 @@ def test_discord_quick_action_rows_stay_within_discord_v1_limit():
     assert max(_quick_action_row(command) for command in DISCORD_QUICK_ACTION_COMMANDS) <= 4
 
 
+def test_discord_palette_slash_command_does_not_expose_page_arg():
+    source = discord_platform.DiscordAdapter._run_palette_slash.__code__
+    assert "page" not in source.co_varnames[:source.co_argcount]
+
+
 @pytest.mark.asyncio
 async def test_quick_action_button_dispatches_direct_commands_without_deleting_palette():
     if not hasattr(discord_platform, "CommandQuickActionsView"):

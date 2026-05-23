@@ -2939,11 +2939,9 @@ class DiscordAdapter(BasePlatformAdapter):
     async def _run_palette_slash(
         self,
         interaction: Any,
-        page: str = "",
     ) -> None:
         """Render the Discord quick-action palette as its own /palette command."""
-        palette_command_text = f"/palette {page}".strip()
-        if not await self._check_slash_authorization(interaction, palette_command_text):
+        if not await self._check_slash_authorization(interaction, "/palette"):
             return
 
         await interaction.response.defer(ephemeral=False)
@@ -3003,9 +3001,8 @@ class DiscordAdapter(BasePlatformAdapter):
             await self._run_simple_slash(interaction, "/retry", "Retrying~")
 
         @tree.command(name="palette", description="Show Discord quick action palette")
-        @discord.app_commands.describe(page="Optional command-list page number")
-        async def slash_palette(interaction: discord.Interaction, page: str = ""):
-            await self._run_palette_slash(interaction, page)
+        async def slash_palette(interaction: discord.Interaction):
+            await self._run_palette_slash(interaction)
 
         @tree.command(name="undo", description="Remove the last exchange")
         async def slash_undo(interaction: discord.Interaction):

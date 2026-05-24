@@ -23,7 +23,7 @@ TIPS = [
     "/retry resends your last message — useful when the agent's response wasn't quite right.",
     "/verbose cycles tool progress display: off → new → all → verbose.",
     "/reasoning high increases the model's thinking depth. /reasoning show displays the reasoning.",
-    "/fast normal and /fast fast set priority processing for supported providers.",
+    "/fast toggles priority processing for faster API responses (provider-dependent).",
     "/yolo skips all dangerous command approval prompts for the rest of the session.",
     "/model lets you switch models mid-session — try /model sonnet or /model gpt-5.",
     "/model --global changes your default model permanently.",
@@ -481,4 +481,5 @@ def get_random_tip(exclude_recent: int = 0) -> str:
             deduplication across sessions.
     """
     return random.choice(TIPS)
+
 
